@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna AI - Assistente Pessoal</title>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    const cfg = await fetch('/config').then(r => r.json());
+    const auth = getAuth(initializeApp(cfg.firebase));
+    window.lunaAuthReady = new Promise(resolve => onAuthStateChanged(auth, user => {
+      if (!user || user.email?.toLowerCase() !== cfg.allowedEmail.toLowerCase()) {
+        window.location.replace('/login'); return resolve(null);
+      }
+      resolve(user);
+    }));
+  </script>
+
+  <meta name="theme-color" content="#212121">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <link rel="stylesheet" href="/style.css?v=4">
+</head>
+<body>
+
+  <main class="main-content">
+    
+    <header class="top-bar">
+      <div class="brand">
+        <h2>Luna <span>1.0</span></h2>
+      </div>
+      <div class="top-actions">
+        <button id="memories-btn" class="memories-btn" type="button">🧠 Memórias</button>
+      </div>
+    </header>
+
+    <div class="chat-container" id="chat-container">
+      <div class="welcome-screen" id="welcome-screen">
+        <img src="icon-192.png" alt="Luna Logo" class="welcome-logo" onerror="this.style.display='none'">
+        <h1>Assistente Pessoal Luna</h1>
+        <p>Sua inteligência artificial centralizada.</p>
+      </div>
+    </div>
+
+    <div id="file-preview-container" class="preview-container hidden">
+      <span id="preview-filename"></span>
+      <button id="remove-file-btn" type="button">✕</button>
+    </div>
+
+    <div class="input-wrapper">
+      <div class="input-box">
+        
+        <input type="file" id="file-input" accept="image/*,audio/*,.pdf,.txt,.md,.csv,.json" style="display: none;">
+        
+        <button id="attach-btn" type="button" class="icon-btn" title="Anexar arquivo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+
+        <button id="realtime-btn" type="button" class="icon-btn" title="Ativar conversa em tempo real">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+            <circle cx="12" cy="12" r="10" stroke-dasharray="4 4"/>
+          </svg>
+        </button>
+
+        <button id="mic-btn" type="button" class="icon-btn" title="Gravar voz">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+
+        <textarea id="user-input" rows="1" placeholder="Qual é a boa?..."></textarea>
+
+        <div id="audio-wave" class="audio-wave hidden">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
+
+        <button id="send-btn" type="button" aria-label="Enviar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+        </button>
+
+      </div>
+      <span class="disclaimer">Luna AI © 2026</span>
+    </div>
+
+  </main>
+
+  <div id="memories-modal" class="memories-modal hidden" role="dialog" aria-modal="true" aria-labelledby="memories-title">
+    <section class="memories-panel">
+      <header><div><h2 id="memories-title">O que a Luna lembra</h2><p>Preferências, interesses e projetos que ajudam nas próximas conversas.</p></div><button id="memories-close" type="button" aria-label="Fechar">✕</button></header>
+      <div id="memories-list" class="memories-list"><p>Carregando…</p></div>
+    </section>
+  </div>
+
+  <script src="/script.js?v=10"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

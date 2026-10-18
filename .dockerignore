@@ -1,0 +1,41 @@
+# Environment variables and local credentials
+.env
+.env.*
+!.env.example
+!.env.production.example
+secrets/
+service-account*.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+application_default_credentials.json
+**/application_default_credentials.json
+credentials.json
+**/credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Personal data, generated media and local configuration
+luna_data/
+static/audio/
+*.db
+*.sqlite*
+luna_personality.txt
+luna_apresentacao.txt
+
+# Python environments and generated files
+.venv/
+.venv-*/
+.uv-cache/
+__pycache__/
+*.py[cod]
+
+# Repository metadata, documentation and local build artifacts
+.git/
+.codex/
+.agents/
+docs/
+tmp/
+ArchLinuxARM*.tar*
+Luna.zip

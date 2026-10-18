@@ -1,0 +1,345 @@
+:root {
+  --bg-primary: #18181b;
+  --bg-secondary: #27272a;
+  --bg-input: #27272a;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --accent-color: #6366f1;
+  --border-color: #3f3f46;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.top-bar {
+  flex-shrink: 0;
+  height: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+}
+
+.memories-btn { border: 1px solid var(--border-color); color: var(--text-primary); background: var(--bg-secondary); border-radius: 18px; padding: 8px 12px; cursor: pointer; }
+.memories-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.65); }
+.memories-modal.hidden { display: none; }
+.memories-panel { width: min(560px, 100%); max-height: min(75vh, 640px); overflow: auto; padding: 18px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 18px 60px rgba(0,0,0,.4); }
+.memories-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.memories-panel h2 { font-size: 1.1rem; margin-bottom: 5px; }
+.memories-panel p { color: var(--text-secondary); font-size: .85rem; }
+.memories-panel header button { background: transparent; border: 0; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; }
+.memory-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border-color); }
+.memory-item > div { flex: 1; }
+.memory-item small { display: block; color: var(--text-secondary); text-transform: capitalize; margin-bottom: 4px; }
+.memory-item p { color: var(--text-primary); }
+.memory-item button { border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); border-radius: 8px; padding: 6px 9px; cursor: pointer; }
+
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 110px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Gap reduzido */
+  -webkit-overflow-scrolling: touch;
+}
+
+.welcome-screen {
+  text-align: center;
+  margin: auto;
+  padding: 20px 10px;
+}
+
+.welcome-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 8px 12px; /* Padding reduzido */
+  border-radius: 16px;
+  line-height: 1.4;
+  font-size: 0.95rem;
+  word-break: break-word;
+  position: relative;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+  white-space: pre-wrap;
+}
+
+.chat-bubble.bot {
+  align-self: flex-start;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+/* Botão de Ouvir Áudio da Resposta */
+.audio-play-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.2s ease;
+}
+
+.audio-play-btn:hover {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.audio-stop-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.audio-stop-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.audio-stop-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.input-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 16px 16px 16px;
+  background-color: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  z-index: 10;
+}
+
+.input-box {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 6px 12px;
+  gap: 8px;
+  min-height: 48px;
+}
+
+#user-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  resize: none;
+  max-height: 100px;
+  padding: 6px 0;
+}
+
+.icon-btn, #send-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#send-btn {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+#mic-btn.recording {
+  color: #ef4444;
+}
+
+/* Botão de Tempo Real Ativo */
+#realtime-btn.active {
+  color: #4ade80; /* Verde indicando modo automático */
+  background-color: rgba(74, 222, 128, 0.1);
+}
+
+/* --- ANIMAÇÃO DAS ONDAS DE ÁUDIO --- */
+.audio-wave {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  flex: 1;
+  justify-content: center;
+}
+
+.audio-wave.hidden {
+  display: none !important;
+}
+
+.audio-wave .bar {
+  width: 4px;
+  height: 6px;
+  background-color: #ef4444;
+  border-radius: 2px;
+  transition: height 0.05s ease;
+}
+
+.preview-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-secondary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.preview-container.hidden {
+  display: none !important;
+}
+
+.disclaimer {
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* --- FORMATAÇÃO DE MARKDOWN SUPER COMPACTA --- */
+.chat-bubble.bot h1, .chat-bubble.bot h2, .chat-bubble.bot h3 { margin: 4px 0 1px 0; font-size: 1rem; line-height: 1.2; }
+.chat-bubble.bot h1:first-child, .chat-bubble.bot h2:first-child, .chat-bubble.bot h3:first-child { margin-top: 0; }
+.chat-bubble.bot p { margin-bottom: 2px; line-height: 1.35; }
+.chat-bubble.bot p:last-child { margin-bottom: 0; }
+.chat-bubble.bot ul, .chat-bubble.bot ol { margin: 2px 0 2px 14px; padding: 0; }
+.chat-bubble.bot li { margin-bottom: 1px; line-height: 1.3; }
+.chat-bubble.bot table { width: 100%; border-collapse: collapse; margin: 4px 0; display: block; overflow-x: auto; }
+.chat-bubble.bot th, .chat-bubble.bot td { border: 1px solid var(--border-color); padding: 3px 6px; font-size: 0.82rem; }
+/* Botão de Editar Mensagem do Usuário */
+.chat-bubble.user {
+  position: relative;
+  padding-right: 28px; /* Espaço para o ícone de lápis */
+}
+
+.edit-msg-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.chat-bubble.user:hover .edit-msg-btn {
+  opacity: 1;
+}
+
+.edit-msg-btn:hover {
+  transform: scale(1.2);
+}
+/* Estilo para miniaturas de imagem enviadas pelo usuário */
+.user-image-preview {
+  margin-bottom: 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 250px;
+}
+
+.user-image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Badge para arquivos ou status de transcrição de áudio */
+.user-file-badge, .user-audio-badge {
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+/* Container da miniatura da imagem no balão do usuário */
+.user-image-preview {
+  margin-top: 4px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 180px;  /* Largura máxima da miniatura */
+  max-height: 180px; /* Altura máxima da miniatura */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ajusta a imagem dentro da miniatura sem distorcer */
+.user-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Recorta suavemente para manter proporção */
+  display: block;
+  border-radius: 12px;
+}

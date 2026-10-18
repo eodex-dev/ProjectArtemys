@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#18181b"><title>Luna · acesso</title><link rel="stylesheet" href="/style.css"><style>
+body{display:grid;place-items:center;min-height:100vh;background:#18181b;color:#f4f4f5;font-family:system-ui}.card{width:min(380px,calc(100% - 40px));padding:30px;background:#27272a;border:1px solid #3f3f46;border-radius:18px}.card h1{margin:0 0 8px;color:#c4b5fd}.card p{color:#a1a1aa;margin-bottom:24px}.card input{width:100%;padding:12px;margin:8px 0 16px;border-radius:8px;background:#18181b;color:white;border:1px solid #52525b}.card button{width:100%;padding:12px;border-radius:8px;background:#6366f1;color:white;border:0;font-weight:600;cursor:pointer}.error{color:#fca5a5;min-height:1.4em;font-size:.9rem}
+</style></head><body><main class="card"><h1>Luna</h1><p>Acesso pessoal. Entre com sua conta autorizada.</p><div id="error" class="error"></div><button id="google">Entrar com Google</button><p style="text-align:center;margin:16px 0">ou</p><form id="form"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required><button>Entrar</button></form></main>
+<script type="module">
+const errorBox=document.querySelector('#error'),googleButton=document.querySelector('#google'),form=document.querySelector('#form');
+function showError(error){
+  const code=error?.code||'';
+  const messages={
+    'auth/operation-not-allowed':'O login Google está desativado. Ative Google em Firebase → Authentication → Sign-in method.',
+    'auth/unauthorized-domain':'Este endereço não está autorizado no Firebase. Adicione localhost em Authentication → Settings → Authorized domains.',
+    'auth/popup-blocked':'O navegador bloqueou a janela. Permita pop-ups para localhost e tente novamente.',
+    'auth/popup-closed-by-user':'A janela de login foi fechada antes de concluir.',
+    'auth/invalid-api-key':'A chave Firebase do .env está inválida ou pertence a outro projeto.'
+  };
+  errorBox.textContent=messages[code]||`${code?code+': ':''}${error?.message||'Falha ao iniciar o login Firebase.'}`;
+  console.error('[Luna Firebase Auth]',error);
+}
+
+try{
+  googleButton.disabled=true;
+  googleButton.textContent='Conectando ao Firebase…';
+  const [appSdk,authSdk]=await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js')
+  ]);
+  const response=await fetch('/config');
+  if(!response.ok)throw new Error(`Não foi possível carregar /config (${response.status}).`);
+  const cfg=await response.json();
+  if(!cfg.allowedEmail||!cfg.firebase?.apiKey||!cfg.firebase?.authDomain||!cfg.firebase?.projectId||!cfg.firebase?.appId){
+    throw new Error('Configuração Firebase incompleta. Confira ALLOWED_EMAIL e os campos FIREBASE_* no .env e reinicie o servidor.');
+  }
+  const auth=authSdk.getAuth(appSdk.initializeApp(cfg.firebase));
+  authSdk.onAuthStateChanged(auth,user=>{
+    if(user&&user.email?.toLowerCase()===cfg.allowedEmail.toLowerCase())location.replace('/');
+    else if(user)authSdk.signOut(auth);
+  });
+  async function finish(credential){
+    if(credential.user.email?.toLowerCase()!==cfg.allowedEmail.toLowerCase()){
+      await authSdk.signOut(auth);
+      throw new Error(`Conta não autorizada. O acesso está limitado a ${cfg.allowedEmail}.`);
+    }
+    location.replace('/');
+  }
+  googleButton.onclick=async()=>{
+    errorBox.textContent='';
+    try{await finish(await authSdk.signInWithPopup(auth,new authSdk.GoogleAuthProvider()));}
+    catch(error){showError(error);}
+  };
+  form.onsubmit=async event=>{
+    event.preventDefault();errorBox.textContent='';
+    try{await finish(await authSdk.signInWithEmailAndPassword(auth,document.querySelector('#email').value,document.querySelector('#password').value));}
+    catch(error){showError(error);}
+  };
+  googleButton.disabled=false;
+  googleButton.textContent='Entrar com Google';
+}catch(error){
+  googleButton.disabled=true;
+  googleButton.textContent='Login Google indisponível';
+  showError(error);
+}
+</script></body></html>
