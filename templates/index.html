@@ -29,7 +29,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
-  <link rel="stylesheet" href="/style.css?v=7">
+  <link rel="stylesheet" href="/style.css?v=8">
 </head>
 <body>
 
@@ -40,6 +40,7 @@
         <h2>Luna <span>AI</span></h2>
       </div>
       <div class="top-actions">
+        <button id="haptics-btn" class="icon-chip hidden" type="button" aria-pressed="true" aria-label="Vibração" title="Vibração">📳</button>
         <button id="memories-btn" class="memories-btn" type="button">🧠 Memórias</button>
       </div>
     </header>
@@ -104,7 +105,7 @@
 
         </div>
       </div>
-      <span class="disclaimer">v1.0.0 - Luna AI © 2026</span>
+      <span class="disclaimer">v1.0.1 - Luna AI © 2026</span>
     </div>
 
   </main>
@@ -155,8 +156,13 @@
     </div>
   </div>
 
+  <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
+    <span id="update-text">Nova versão da Luna disponível.</span>
+    <button id="update-now" type="button">Atualizar</button>
+    <button id="update-later" type="button" class="ghost">Depois</button>
+  </div>
+
   <script src="/voice-core.js?v=1"></script>
-  <script src="/script.js?v=13"></script>
-  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+  <script src="/script.js?v=14"></script>
 </body>
 </html>

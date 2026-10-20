@@ -2,7 +2,11 @@
 
 Assistente pessoal em português brasileiro, acessível pelo navegador como site ou Progressive Web App (PWA). A Luna combina uma interface web própria com um servidor FastAPI, memória local em SQLite e serviços de IA configuráveis.
 
-> Projeto pessoal em desenvolvimento. Versão exibida na aplicação: **v1.0.0**.
+<p align"center">
+<img width="1407" height="768" alt="Logo Luna" src="https://github.com/user-attachments/assets/2f05401d-3564-49cb-aa22-09f312b2d312" />
+</p>
+
+> Projeto pessoal em desenvolvimento. Versão exibida na aplicação: **v1.0.1**.
 
 ## Apresentação
 

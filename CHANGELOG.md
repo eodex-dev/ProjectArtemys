@@ -2,6 +2,13 @@
 
 Registra mudanças funcionais e atualizações visíveis para o usuário. A Luna consulta a versão mais recente quando perguntam o que há de novo.
 
+## v1.0.1 — 2026-10-19
+
+- **Aviso de atualização:** quando há uma versão nova da Luna, aparece um pop-up com o botão "Atualizar", que reinicia o site ou o aplicativo instalado sem precisar fechá-lo à mão. Durante uma conversa por voz, o aviso espera a conversa terminar.
+- **Animação de "pensando":** enquanto a Luna processa a resposta, aparece um indicador animado no chat, que muda para "Ainda pensando…" se a espera for longa.
+- **Timers e lembretes:** peça "me avisa em 10 minutos" ou "me lembra às 15h de ligar pro João" e a Luna cria um timer com contagem regressiva no chat, que pode ser cancelado. O aviso aparece no chat, vibra e, com as notificações ativadas, também aparece como notificação do aparelho. O aviso depende do app estar aberto ou em segundo plano.
+- **Vibração:** toques curtos ao enviar e ao receber respostas e um padrão mais longo quando um timer dispara, com botão no topo para ligar ou desligar (aparece só em aparelhos que suportam vibração).
+
 ## v1.0.0 — 2026-10-17
 
 - **Raciocínio melhor:** com modelos de raciocínio (como o GPT-OSS 120B), a Luna pensa pouco em conversa simples e mais em contas, análises, código e perguntas do tipo "por quê". O limite de resposta subiu e, se o raciocínio consumir tudo e a resposta vier vazia, ela tenta de novo automaticamente.

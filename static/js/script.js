@@ -497,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('welcome-screen')?.remove();
       appendBubble(data.user_transcription, 'user');
       appendBubble(data.response, 'bot', data.audio_url);
+      handleActions(data.actions);
       if (voiceUser) voiceUser.textContent = data.user_transcription;
       if (voiceCaption) voiceCaption.textContent = plainForSpeech(data.response);
       await speakReply(data, turn);
@@ -599,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.assign(voice, { stream: null, ctx: null, source: null, processor: null, sink: null, vad: null, audioEl: null, wake: null });
     setVoiceState('idle', '');
     voiceOverlay.classList.add('hidden');
+    flushPendingUpdate();
   }
 
   if (realtimeBtn) {
@@ -745,6 +747,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileInput) fileInput.value = '';
     if (previewContainer) previewContainer.classList.add('hidden');
 
+    haptic(8);
+    showThinking();
     try {
       const response = await fetchWithAuth('/api/chat', {
         method: 'POST',
@@ -752,6 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await readApiResponse(response);
+      hideThinking();
 
       if (currentFile && currentFile.type.startsWith('audio/') && data.user_transcription) {
         if (bubbleObj && bubbleObj.textSpan) {
@@ -760,8 +765,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       appendBubble(data.response, 'bot', data.audio_url);
+      handleActions(data.actions);
+      haptic(18);
 
     } catch (error) {
+      hideThinking();
       appendBubble(`⚠️ Erro: ${error.message}`, 'bot');
     }
   }
@@ -960,4 +968,312 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return { bubble, textSpan };
   }
+
+  // ---------------------------------------------------------------- Vibração (recurso nativo)
+  const hapticsBtn = document.getElementById('haptics-btn');
+  const HAPTICS_KEY = 'luna_haptics';
+
+  function hapticsEnabled() {
+    try { return localStorage.getItem(HAPTICS_KEY) !== 'off'; } catch (_) { return true; }
+  }
+
+  function haptic(pattern) {
+    if (!('vibrate' in navigator) || !hapticsEnabled()) return false;
+    try { return navigator.vibrate(pattern); } catch (_) { return false; }
+  }
+
+  function renderHapticsBtn() {
+    if (!hapticsBtn) return;
+    const on = hapticsEnabled();
+    hapticsBtn.setAttribute('aria-pressed', String(on));
+    hapticsBtn.textContent = on ? '📳' : '📴';
+    hapticsBtn.title = on ? 'Vibração ligada' : 'Vibração desligada';
+  }
+
+  if (hapticsBtn && 'vibrate' in navigator) {
+    hapticsBtn.classList.remove('hidden');
+    renderHapticsBtn();
+    hapticsBtn.addEventListener('click', () => {
+      try { localStorage.setItem(HAPTICS_KEY, hapticsEnabled() ? 'off' : 'on'); } catch (_) {}
+      renderHapticsBtn();
+      haptic(30);
+    });
+  }
+
+  // ---------------------------------------------------------------- Animação de "pensando"
+  let thinkingEl = null;
+  let thinkingTimer = null;
+
+  function showThinking() {
+    hideThinking();
+    if (!chatContainer) return;
+    const el = document.createElement('div');
+    el.className = 'chat-bubble bot thinking';
+    el.setAttribute('role', 'status');
+    el.innerHTML = '<span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="thinking-label">Pensando…</span>';
+    chatContainer.appendChild(el);
+    scrollChatToBottom();
+    thinkingEl = el;
+    thinkingTimer = setTimeout(() => {
+      const label = el.querySelector('.thinking-label');
+      if (label) label.textContent = 'Ainda pensando…';
+    }, 8000);
+  }
+
+  function hideThinking() {
+    if (thinkingTimer) { clearTimeout(thinkingTimer); thinkingTimer = null; }
+    if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; }
+  }
+
+  // ---------------------------------------------------------------- Timers e lembretes
+  const TIMERS_KEY = 'luna_timers_v1';
+  const TIMER_MAX_SECONDS = 7 * 24 * 3600;
+  const timers = new Map();
+  let notifyHintShown = false;
+
+  function saveTimers() {
+    try {
+      const lista = [...timers.values()].map(({ id, fireAt, texto }) => ({ id, fireAt, texto }));
+      localStorage.setItem(TIMERS_KEY, JSON.stringify(lista));
+    } catch (_) {}
+  }
+
+  function loadTimers() {
+    try {
+      const lista = JSON.parse(localStorage.getItem(TIMERS_KEY) || '[]');
+      for (const t of lista) {
+        if (t && typeof t.id === 'string' && Number.isFinite(t.fireAt) && typeof t.texto === 'string') {
+          timers.set(t.id, { id: t.id, fireAt: t.fireAt, texto: t.texto.slice(0, 140), chip: null });
+        }
+      }
+    } catch (_) {}
+  }
+
+  function formatRemaining(ms) {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const d = Math.floor(total / 86400);
+    const h = Math.floor((total % 86400) / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const dois = (n) => String(n).padStart(2, '0');
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}:${dois(m)}:${dois(s)}`;
+    return `${m}:${dois(s)}`;
+  }
+
+  function renderTimerChip(t) {
+    if (!chatContainer) return;
+    const chip = document.createElement('div');
+    chip.className = 'timer-chip';
+    const icon = document.createElement('span');
+    icon.textContent = '⏱';
+    const time = document.createElement('span');
+    time.className = 'timer-time';
+    const text = document.createElement('span');
+    text.className = 'timer-text';
+    text.textContent = t.texto;
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.textContent = 'Cancelar';
+    cancel.addEventListener('click', () => cancelTimer(t.id));
+    chip.append(icon, time, text, cancel);
+    chatContainer.appendChild(chip);
+    scrollChatToBottom();
+    t.chip = chip;
+    updateChips();
+  }
+
+  function updateChips() {
+    const agora = Date.now();
+    for (const t of timers.values()) {
+      const time = t.chip && t.chip.querySelector('.timer-time');
+      if (time) time.textContent = formatRemaining(t.fireAt - agora);
+    }
+  }
+
+  function closeChip(t, rotulo) {
+    if (!t.chip) return;
+    t.chip.classList.add('done');
+    t.chip.querySelector('.timer-time').textContent = rotulo;
+    const botao = t.chip.querySelector('button');
+    if (botao) botao.remove();
+  }
+
+  function addTimer({ segundos, texto }) {
+    const id = `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const t = { id, fireAt: Date.now() + segundos * 1000, texto: String(texto || 'Lembrete da Luna').slice(0, 140), chip: null };
+    timers.set(id, t);
+    saveTimers();
+    renderTimerChip(t);
+  }
+
+  function cancelTimer(id) {
+    const t = timers.get(id);
+    if (!t) return;
+    timers.delete(id);
+    saveTimers();
+    closeChip(t, 'cancelado');
+  }
+
+  function cancelAllTimers() {
+    for (const id of [...timers.keys()]) cancelTimer(id);
+  }
+
+  async function showSystemNotification(texto, id) {
+    const options = {
+      body: texto,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: `luna-${id}`,
+      requireInteraction: true,
+      vibrate: [200, 100, 200, 100, 400],
+      data: { url: '/' }
+    };
+    try {
+      const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.ready : null;
+      if (reg && reg.showNotification) { await reg.showNotification('Luna ⏰', options); return; }
+    } catch (_) {}
+    try { new Notification('Luna ⏰', options); } catch (_) {}
+  }
+
+  function fireTimer(t, atrasadoMs) {
+    timers.delete(t.id);
+    saveTimers();
+    const atrasado = atrasadoMs > 60000;
+    const texto = atrasado ? `${t.texto} (atrasado)` : t.texto;
+    closeChip(t, 'feito');
+    document.getElementById('welcome-screen')?.remove();
+    appendBubble(`⏰ ${texto}`, 'bot');
+    haptic([200, 100, 200, 100, 400]);
+    if (document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted') {
+      showSystemNotification(texto, t.id);
+    }
+    if (voice.active && 'speechSynthesis' in window) {
+      try {
+        const fala = new SpeechSynthesisUtterance(`Lembrete: ${t.texto}`);
+        fala.lang = 'pt-BR';
+        speechSynthesis.speak(fala);
+      } catch (_) {}
+    }
+  }
+
+  function checkTimers() {
+    const agora = Date.now();
+    for (const t of [...timers.values()]) {
+      if (t.fireAt <= agora) fireTimer(t, agora - t.fireAt);
+    }
+  }
+
+  function offerNotifications() {
+    if (notifyHintShown || !chatContainer || !('Notification' in window)) return;
+    if (Notification.permission === 'granted') return;
+    notifyHintShown = true;
+    const hint = document.createElement('div');
+    hint.className = 'notify-hint';
+    const msg = document.createElement('span');
+    if (Notification.permission === 'denied') {
+      msg.textContent = 'As notificações estão bloqueadas neste navegador; o aviso aparecerá só aqui no chat, com o app aberto.';
+      hint.append(msg);
+    } else {
+      msg.textContent = 'Para ser avisado com a tela apagada, ative as notificações.';
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.textContent = 'Ativar avisos';
+      botao.addEventListener('click', async () => {
+        try {
+          const resultado = await Notification.requestPermission();
+          msg.textContent = resultado === 'granted'
+            ? 'Avisos ativados. Mantenha o app aberto ou em segundo plano para o aviso tocar.'
+            : 'Sem permissão, o aviso aparecerá só aqui no chat, com o app aberto.';
+        } catch (_) {
+          msg.textContent = 'Não foi possível ativar as notificações neste navegador.';
+        }
+        botao.remove();
+      });
+      hint.append(msg, botao);
+    }
+    chatContainer.appendChild(hint);
+    scrollChatToBottom();
+  }
+
+  function handleActions(actions) {
+    if (!Array.isArray(actions) || !actions.length) return;
+    let criou = false;
+    for (const acao of actions.slice(0, 5)) {
+      if (!acao || typeof acao !== 'object') continue;
+      if (acao.tipo === 'timer' && Number.isFinite(acao.segundos) && acao.segundos >= 1 && acao.segundos <= TIMER_MAX_SECONDS) {
+        addTimer(acao);
+        criou = true;
+      } else if (acao.tipo === 'cancelar_lembretes') {
+        cancelAllTimers();
+      }
+    }
+    if (criou) offerNotifications();
+  }
+
+  loadTimers();
+  checkTimers();
+  setInterval(() => { checkTimers(); updateChips(); }, 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkTimers();
+  });
+
+  // ---------------------------------------------------------------- Atualização do app (PWA)
+  const updateBanner = document.getElementById('update-banner');
+  const updateText = document.getElementById('update-text');
+  const updateNow = document.getElementById('update-now');
+  const updateLater = document.getElementById('update-later');
+  let pendingUpdate = null;
+  let updateRequested = false;
+
+  function showUpdateBanner(aplicar) {
+    if (!updateBanner) return;
+    if (voice.active) { pendingUpdate = aplicar; return; }
+    updateBanner.classList.remove('hidden');
+    updateNow.disabled = false;
+    updateNow.onclick = () => {
+      updateRequested = true;
+      updateNow.disabled = true;
+      updateText.textContent = 'Atualizando…';
+      aplicar();
+      setTimeout(() => location.reload(), 4000);
+    };
+    updateLater.onclick = () => updateBanner.classList.add('hidden');
+  }
+
+  function flushPendingUpdate() {
+    if (!pendingUpdate) return;
+    const aplicar = pendingUpdate;
+    pendingUpdate = null;
+    showUpdateBanner(aplicar);
+  }
+
+  function setupServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    const tinhaControlador = !!navigator.serviceWorker.controller;
+    let recarregando = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!tinhaControlador || !updateRequested || recarregando) return;
+      recarregando = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      const oferecer = (worker) => showUpdateBanner(() => worker.postMessage({ type: 'SKIP_WAITING' }));
+      if (reg.waiting && navigator.serviceWorker.controller) oferecer(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const novo = reg.installing;
+        if (!novo) return;
+        novo.addEventListener('statechange', () => {
+          if (novo.state === 'installed' && navigator.serviceWorker.controller) oferecer(novo);
+        });
+      });
+      const verificar = () => { reg.update().catch(() => {}); };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') verificar();
+      });
+      setInterval(verificar, 30 * 60 * 1000);
+    }).catch((error) => console.warn('[Luna] Service worker não registrado:', error));
+  }
+
+  setupServiceWorker();
 });

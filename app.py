@@ -37,7 +37,7 @@ from core_brain import (
     extrair_memorias,
     extrair_texto_pdf_escaneado_com_groq,
     listar_memorias,
-    responder,
+    responder_com_acoes,
     salvar_mensagem,
     transcrever_audio,
     transcricao_irrelevante,
@@ -169,7 +169,7 @@ async def chat(background_tasks: BackgroundTasks, prompt: str = Form(""), file: 
         else:
             raise HTTPException(415, "Tipo não suportado. Envie imagem, áudio, PDF ou arquivo de texto.")
     try:
-        answer, _ = await asyncio.to_thread(responder, prompt, texto_anexo, imagem_url)
+        answer, _, acoes = await asyncio.to_thread(responder_com_acoes, prompt, texto_anexo, imagem_url)
     except Exception as exc:
         logger.exception("Falha ao gerar resposta do chat")
         provider = "Groq" if type(exc).__module__.startswith("groq") else "backend da Luna"
@@ -177,7 +177,7 @@ async def chat(background_tasks: BackgroundTasks, prompt: str = Form(""), file: 
         answer = f"Não consegui concluir a resposta. {explanation}"
         salvar_mensagem("user", prompt or "[anexo enviado]")
         salvar_mensagem("assistant", answer)
-        return {"response": answer, "user_transcription": transcricao, "audio_url": None}
+        return {"response": answer, "user_transcription": transcricao, "audio_url": None, "actions": []}
     if prompt.strip():
         background_tasks.add_task(extrair_memorias, prompt.strip())
     background_tasks.add_task(atualizar_resumo_conversa)
@@ -187,7 +187,7 @@ async def chat(background_tasks: BackgroundTasks, prompt: str = Form(""), file: 
             audio_url = await gerar_voz_luna_async(answer)
         except Exception:
             logger.exception("Falha ao gerar áudio TTS; mantendo a resposta em texto")
-    return {"response": answer, "user_transcription": transcricao, "audio_url": audio_url}
+    return {"response": answer, "user_transcription": transcricao, "audio_url": audio_url, "actions": acoes}
 
 
 @app.post("/api/voice")
@@ -209,7 +209,7 @@ async def voice_chat(background_tasks: BackgroundTasks, file: UploadFile = File(
     if transcricao_irrelevante(texto):
         return {"ignored": True, "user_transcription": texto, "response": "", "audio_url": None}
     try:
-        answer, _ = await asyncio.to_thread(responder, texto, "", None, True)
+        answer, _, acoes = await asyncio.to_thread(responder_com_acoes, texto, "", None, True)
     except Exception as exc:
         logger.exception("Falha ao gerar resposta da conversa por voz")
         provider = "Groq" if type(exc).__module__.startswith("groq") else "backend da Luna"
@@ -222,7 +222,7 @@ async def voice_chat(background_tasks: BackgroundTasks, file: UploadFile = File(
             audio_url = await gerar_voz_luna_async(answer)
         except Exception:
             logger.exception("Falha ao gerar áudio TTS da conversa por voz")
-    return {"ignored": False, "user_transcription": texto, "response": answer, "audio_url": audio_url}
+    return {"ignored": False, "user_transcription": texto, "response": answer, "audio_url": audio_url, "actions": acoes}
 
 
 @app.get("/api/history")
