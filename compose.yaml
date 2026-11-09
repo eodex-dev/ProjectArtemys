@@ -1,0 +1,44 @@
+services:
+  luna:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      LUNA_DATA_DIR: /data
+      LUNA_DB_ENCRYPTION_REQUIRED: "true"
+      LUNA_PERSONALITY_FILE: /run/luna/luna_personality.txt
+      LUNA_PRESENTATION_FILE: /run/luna/luna_apresentacao.txt
+    expose:
+      - "8000"
+    volumes:
+      - ./luna_data/deploy:/data
+      - luna_audio:/app/static/audio
+      - ./luna_personality.txt:/run/luna/luna_personality.txt:ro
+      - ./luna_apresentacao.txt:/run/luna/luna_apresentacao.txt:ro
+    networks:
+      - luna_private
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - luna_private
+
+volumes:
+  luna_audio:
+  caddy_data:
+  caddy_config:
+
+networks:
+  luna_private:
+    internal: false

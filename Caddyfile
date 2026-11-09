@@ -1,0 +1,10 @@
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+		Permissions-Policy "microphone=(self), camera=()"
+	}
+	reverse_proxy luna:8000
+}

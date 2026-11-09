@@ -1,0 +1,121 @@
+/* Temas sazonais da Luna. Tudo vale só sob [data-season="..."]; sem o atributo, o visual padrão não muda. */
+
+/* ---------- Menu de temas (aparece em qualquer tema) ---------- */
+.theme-menu { position: absolute; top: 60px; right: 12px; z-index: 40; width: min(310px, calc(100vw - 24px)); padding: 14px; border-radius: 16px; background: rgba(24,24,27,.97); border: 1px solid var(--border-color); box-shadow: 0 14px 40px rgba(0,0,0,.5); color: var(--text-primary); font-size: .9rem; }
+.theme-menu.hidden { display: none; }
+.theme-menu h3 { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); margin: 12px 0 6px; font-weight: 600; }
+.theme-menu h3:first-child { margin-top: 0; }
+.theme-option { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 10px; cursor: pointer; }
+.theme-option:hover { background: rgba(255,255,255,.06); }
+.theme-option input { accent-color: var(--accent-color); }
+.theme-option small { display: block; color: var(--text-secondary); font-size: .76rem; }
+.theme-option.disabled { opacity: .45; cursor: default; }
+.theme-option.disabled:hover { background: transparent; }
+.theme-segment { display: flex; gap: 6px; }
+.theme-segment button { flex: 1; padding: 8px 6px; border-radius: 10px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; font-size: .85rem; }
+.theme-segment button[aria-pressed="true"] { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
+.theme-switch { display: flex; align-items: center; justify-content: space-between; padding: 6px; cursor: pointer; }
+
+/* ---------- Natal ---------- */
+html[data-season="natal"] {
+  --bg-primary: #0a1030;
+  --bg-secondary: rgba(18, 26, 58, .66);
+  --bg-input: rgba(14, 20, 46, .58);
+  --text-primary: #f7f5ff;
+  --text-secondary: #bcc3dd;
+  --accent-color: #bf2f2a;
+  --border-color: rgba(255, 255, 255, .15);
+  --season-dim: .52;
+  background-color: #0a1030;
+}
+html[data-season="natal"][data-season-bg="soft"] { --season-dim: .70; }
+html[data-season="natal"][data-season-bg="strong"] { --season-dim: .34; }
+html[data-season="natal"] body { background: transparent; }
+
+.season-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at 50% 20%, #16205a 0%, #0a1030 70%); }
+.season-stage { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(1.02); background-size: 100% 100%; background-repeat: no-repeat; opacity: 0; transition: opacity 1.4s ease; animation: season-drift 48s ease-in-out infinite alternate; will-change: transform; }
+.season-stage.ready { opacity: 1; }
+@keyframes season-drift { 0% { transform: translate(-50%, -50%) scale(1.02); } 100% { transform: translate(-50.4%, -50.3%) scale(1.085); } }
+@media (orientation: portrait) {
+  .season-stage { width: max(100vw, calc(100vh * .5586)); width: max(100vw, calc(100dvh * .5586)); aspect-ratio: 572 / 1024; background-image: url("/themes/natal-vertical.webp"); }
+}
+@media (orientation: landscape) {
+  .season-stage { width: max(100vw, calc(100vh * 1.7778)); width: max(100vw, calc(100dvh * 1.7778)); aspect-ratio: 1600 / 900; background-image: url("/themes/natal-horizontal.webp"); }
+}
+.season-dim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,8,26,.22) 0%, rgba(5,8,26,var(--season-dim)) 36%, rgba(5,8,26,calc(var(--season-dim) + .14)) 100%); }
+@media (orientation: landscape) and (min-width: 1000px) {
+  .season-dim { background: linear-gradient(90deg, rgba(5,8,26,.10) 0%, rgba(5,8,26,calc(var(--season-dim) + .06)) 26%, rgba(5,8,26,calc(var(--season-dim) + .06)) 74%, rgba(5,8,26,.10) 100%); }
+}
+
+/* brilhos animados sobre pontos da imagem (posições em % da própria imagem, então acompanham o zoom) */
+.glow { position: absolute; width: var(--s, 8%); aspect-ratio: 1; left: var(--x); top: var(--y); transform: translate(-50%, -50%); border-radius: 50%; mix-blend-mode: screen; opacity: .7; display: none;
+  background: radial-gradient(circle, rgba(255,240,180,.95) 0%, rgba(255,208,112,.55) 24%, rgba(255,170,70,.18) 52%, rgba(255,150,50,0) 70%); }
+.glow.star { animation: glow-star 4.4s ease-in-out infinite; }
+.glow.lamp { animation: glow-flicker 3.3s linear infinite; }
+.glow.lamp.b { animation-duration: 3.9s; animation-delay: -1.4s; }
+.glow.win { animation: glow-flicker 5.1s linear infinite; animation-delay: -2s; opacity: .55; }
+.glow.tw { animation: glow-twinkle var(--t, 2.8s) ease-in-out infinite; animation-delay: var(--d, 0s); background: radial-gradient(circle, rgba(255,246,200,1) 0%, rgba(255,214,120,.5) 30%, rgba(255,190,90,0) 68%); }
+@keyframes glow-star { 0%, 100% { opacity: .5; transform: translate(-50%, -50%) scale(.84); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.16); } }
+@keyframes glow-flicker { 0%, 100% { opacity: .72; } 9% { opacity: .92; } 17% { opacity: .6; } 31% { opacity: .86; } 46% { opacity: .68; } 61% { opacity: .96; } 79% { opacity: .64; } }
+@keyframes glow-twinkle { 0%, 100% { opacity: .15; transform: translate(-50%, -50%) scale(.6); } 50% { opacity: .95; transform: translate(-50%, -50%) scale(1.15); } }
+@media (orientation: portrait) {
+  .g-star { --x: 50%; --y: 10.8%; --s: 24%; display: block; }
+  .g-l1 { --x: 46.7%; --y: 50.3%; --s: 11%; display: block; }
+  .g-l2 { --x: 14%; --y: 74.9%; --s: 11%; display: block; }
+  .g-w1 { --x: 71.2%; --y: 30.7%; --s: 5%; display: block; }
+  .g-w2 { --x: 80.2%; --y: 40.7%; --s: 5.5%; display: block; }
+  .g-t1 { --x: 3%; --y: 55.5%; --s: 3.6%; --t: 2.6s; --d: -.4s; display: block; }
+  .g-t2 { --x: 5%; --y: 60%; --s: 3.4%; --t: 3.3s; --d: -1.7s; display: block; }
+}
+@media (orientation: landscape) {
+  .g-star { --x: 68.8%; --y: 10.9%; --s: 15%; display: block; }
+  .g-ts { --x: 8.8%; --y: 10.2%; --s: 6%; --t: 3.6s; --d: -.8s; display: block; }
+  .g-l1 { --x: 45.7%; --y: 27.9%; --s: 7.5%; display: block; }
+  .g-l2 { --x: 18.7%; --y: 84%; --s: 8%; display: block; }
+  .g-w1 { --x: 82.4%; --y: 21.3%; --s: 3%; display: block; }
+  .g-w2 { --x: 88.3%; --y: 55.1%; --s: 3.2%; display: block; }
+  .g-t1 { --x: 8%; --y: 27%; --s: 2.4%; --t: 2.4s; --d: -.2s; display: block; }
+  .g-t2 { --x: 12%; --y: 38%; --s: 2.4%; --t: 3.1s; --d: -1.3s; display: block; }
+  .g-t3 { --x: 5.5%; --y: 43%; --s: 2.4%; --t: 2.8s; --d: -2.1s; display: block; }
+  .g-t4 { --x: 10%; --y: 50%; --s: 2.4%; --t: 3.5s; --d: -.9s; display: block; }
+}
+
+.season-snow { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* o app fica acima do fundo; o "vidro" é leve para a pintura continuar aparecendo */
+html[data-season="natal"] .main-content { z-index: 1; }
+html[data-season="natal"] .top-bar { background-color: rgba(8, 12, 36, .34); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom-color: rgba(255,255,255,.12); }
+html[data-season="natal"] .input-wrapper { background: linear-gradient(to top, rgba(6,10,30,.72) 0%, rgba(6,10,30,.38) 70%, rgba(6,10,30,0) 100%); border-top: 0; }
+html[data-season="natal"] .input-box { background-color: rgba(14, 20, 46, .5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-color: rgba(255,255,255,.18); }
+html[data-season="natal"] .chat-bubble.bot { background-color: rgba(16, 22, 50, .56); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-color: rgba(255,255,255,.13); box-shadow: 0 2px 14px rgba(0,0,0,.25); }
+html[data-season="natal"] .chat-bubble.user { background-color: rgba(191, 47, 42, .92); box-shadow: 0 2px 14px rgba(0,0,0,.25); }
+html[data-season="natal"] .welcome-screen { text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+html[data-season="natal"] .memories-panel, html[data-season="natal"] .theme-menu { background: rgba(14, 20, 46, .93); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+html[data-season="natal"] .voice-overlay { background: rgba(6, 10, 30, .8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+html[data-season="natal"] .card { background: rgba(14, 20, 46, .72); border-color: rgba(255,255,255,.16); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+html[data-season="natal"] .card h1 { color: #ffd98a; }
+
+/* gorro de Papai Noel no canto dos balões da Luna */
+html[data-season="natal"] .chat-bubble.bot:not(.thinking)::before { content: ""; position: absolute; top: -13px; left: -7px; width: 28px; height: 24px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpolygon points='5%2C21 27%2C21 24%2C12 19%2C6.5 12%2C5 7%2C8 6.5%2C12 10%2C10.5 13%2C11 8%2C17' fill='%23d7332b'/%3E%3Crect x='3' y='18.5' width='26' height='6.5' rx='3.2' fill='%23ffffff'/%3E%3Ccircle cx='6.2' cy='7.2' r='3.1' fill='%23ffffff'/%3E%3C/svg%3E") center / contain no-repeat; transform: rotate(-12deg); pointer-events: none; z-index: 1; }
+
+/* "pensando": o trenó cruza o balão enquanto o modelo responde */
+html[data-season="natal"] .chat-bubble.thinking { padding: 5px 14px 5px 6px; }
+.sleigh-track { position: relative; display: inline-block; width: 150px; height: 38px; overflow: hidden; flex-shrink: 0; }
+.sleigh-svg { position: absolute; left: 0; top: 1px; height: 36px; width: auto; animation: sleigh-fly 3.8s linear infinite; }
+@keyframes sleigh-fly {
+  0% { transform: translate(-95px, 2px); } 20% { transform: translate(-48px, -2px); } 40% { transform: translate(0, 2px); }
+  60% { transform: translate(52px, -2px); } 80% { transform: translate(102px, 2px); } 100% { transform: translate(152px, 0); }
+}
+.sleigh-svg .leg { animation: sleigh-gallop .46s ease-in-out infinite alternate; }
+.sleigh-svg .leg-b, .sleigh-svg .leg-d { animation-delay: -.23s; }
+@keyframes sleigh-gallop { from { transform: rotate(-20deg); } to { transform: rotate(20deg); } }
+.sleigh-svg .deer { animation: sleigh-bob .46s ease-in-out infinite alternate; }
+.sleigh-svg .deer.r2 { animation-delay: -.23s; }
+@keyframes sleigh-bob { from { transform: translateY(0); } to { transform: translateY(-1.2px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .season-stage { animation: none; }
+  .glow { animation: none !important; opacity: .6; }
+  .sleigh-svg { animation: none; transform: translate(26px, 0); }
+  .sleigh-svg .leg, .sleigh-svg .deer { animation: none; }
+}
